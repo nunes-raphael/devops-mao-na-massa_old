@@ -1,0 +1,82 @@
+---
+- name: Configurar servidor de aplicacao Java
+  hosts: app01
+
+  roles:
+    - configuracao-defaults-so
+
+  user: vagrant
+  become: yes
+
+  vars:
+    - dbhost: "db01"
+    - dbname: "notes"
+    - dbusername: "notesapp"
+    - dbpassword: "devopsmaonamassa"
+  tasks:    
+    - name: Adicionar usuario de app
+      user:
+        name: app
+        comment: usuario de aplicacao
+        uid: 500  
+    - name: Downlaod do Maven 
+      get_url:
+        url: https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.1.0/apache-maven-3.1.0-bin.tar.gz
+        dest: /opt/apache-maven-3.1.0-bin.tar.gz
+    - name: Unzip do pacote maven
+      ansible.builtin.unarchive:
+        src: /opt/apache-maven-3.1.0-bin.tar.gz
+        dest: /opt/
+        remote_src: True
+        
+    - name: Instacao do Java
+      yum:
+        name: java-1.8.0-openjdk-devel
+        state: latest
+    - name: Criacao do diretorio de app
+      file:
+        path: /opt/notes
+        state: directory
+        owner: app
+        group: app
+    - name: instalacao do git client
+      yum:
+        name: git
+        state: latest
+    - name: Clone do repositorio Notes - app
+      git:
+        repo: 'https://github.com/nunes-raphael/spring-boot-mysql-rest-api-tutorial.git'
+        dest: /opt/notes
+        clone: yes
+        force: yes
+    - name: Configurar arquivo de propriedades para camada de banco de dados
+      template:
+        src: /vagrant/playbooks/roles/configuracao-defaults-so/templates/application.properties
+        dest: /opt/notes/src/main/resources/application.properties
+    - name: Gerar pacote da aplicacao
+      command: /opt/apache-maven-3.1.0/bin/mvn -f /opt/notes/pom.xml package
+      become_user: app
+    - name: Registrar a versao atual do pacote
+      shell:
+        cmd: /opt/apache-maven-3.1.0/bin/mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -v '\['
+        chdir: /opt/notes/
+      register: app_version
+    - name: Configurar servico do SystemD
+      template:
+        src: /vagrant/playbooks/roles/configuracao-defaults-so/templates/etc/systemd/system/note.service
+        dest: /etc/systemd/system/note.service
+      notify: reload daemon
+    - name: iniciar o servico notes
+      service:
+        name: note
+        state: restarted
+  
+  handlers:
+    - name: reload app
+      systemd:
+        state: restart
+        daemon_reload: yes
+        name: 'note'
+    - name: reload daemon
+      systemd:
+        daemon_reexec: yes

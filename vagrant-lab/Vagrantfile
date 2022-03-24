@@ -1,0 +1,15 @@
+Vagrant.configure("2") do |config|
+    config.vm.define "master" do |master|
+        master.vm.box = "centos/7"
+        master.vbguest.auto_update = false
+        master.vbguest.installer_options = { allow_kernel_upgrade: true }
+        master.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+        master.vm.provision "shell", path: "script.sh"
+        master.vm.hostname = "master"
+        master.vm.provider "virtualbox" do |v|
+            v.cpus = "2"
+            v.memory = "2048"
+            v.name = "master"
+        end
+    end
+end

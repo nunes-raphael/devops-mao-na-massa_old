@@ -1,0 +1,25 @@
+---
+
+- name: Upgrade de todos os pacotes do so  
+  yum: name=* state=latest update_cache=yes    
+    
+- name: instalacao de Pacotes
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - git
+    - vim
+    - tree
+    - net-tools
+
+- name: Configurar hosts lab Ansible
+  lineinfile: 
+    dest: /etc/hosts
+    state: present
+    line: "{{item}}"
+  with_items:
+    - 192.168.1.2 control-node
+    - 192.168.1.3 app01
+    - 192.168.1.4 db01
+...
