@@ -1,0 +1,12 @@
+Log created: 2022-04-06T00:32:00.407762000Z
+Process ID:  6404 (0x1904)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: docker
+Arg[3]: --startvm
+Arg[4]: 7e33922c-8fab-4608-8906-3cd14a94db7c
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2
